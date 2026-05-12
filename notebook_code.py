@@ -6,7 +6,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 
 # File path to the original raw dataset
-DATA_PATH = r"data/AI purchase cost project (STUDENT DATA) V3.csv"
+DATA_PATH = r"data/AI purchase cost project 12.05.csv"
 
 # Let's load the data
 df = pd.read_csv(DATA_PATH, sep=";", decimal=",")
@@ -22,21 +22,23 @@ def preprocess_data(df):
     print("Starting preprocessing...")
     df_clean = df.copy()
 
-    # 1. Drop Shipments
-    if 'Shipment' in df_clean.columns:
-        df_clean = df_clean.drop('Shipment', axis=1)
+    # 1. Drop Shipments and Crossdock
+    cols_to_drop = ['Shipment', 'Crossdock']
+    for col in cols_to_drop:
+        if col in df_clean.columns:
+            df_clean = df_clean.drop(col, axis=1)
 
-    # 2. Date parsing (LAADDATUM)
-    df_clean['LAADDATUM'] = pd.to_datetime(df_clean['LAADDATUM'], format='%d/%m/%Y', errors='coerce')
-    df_clean['Load_Year'] = df_clean['LAADDATUM'].dt.year
-    df_clean['Load_Month'] = df_clean['LAADDATUM'].dt.month
-    df_clean['Load_DayOfWeek'] = df_clean['LAADDATUM'].dt.dayofweek
+    # 2. Date parsing (load date)
+    df_clean['load date'] = pd.to_datetime(df_clean['load date'], format='%d/%m/%Y', errors='coerce')
+    df_clean['Load_Year'] = df_clean['load date'].dt.year
+    df_clean['Load_Month'] = df_clean['load date'].dt.month
+    df_clean['Load_DayOfWeek'] = df_clean['load date'].dt.dayofweek
     # We keep broader calendar patterns, but drop the day-of-month because
     # it showed almost no signal for the target and adds unnecessary noise.
-    df_clean = df_clean.drop('LAADDATUM', axis=1)
+    df_clean = df_clean.drop('load date', axis=1)
 
     # 3. Y/N -> 1/0
-    bool_cols = ['Crossdock', 'ADR', 'Express', 'Thermo']
+    bool_cols = ['ADR', 'Express', 'Thermo', 'Intermodal']
     for col in bool_cols:
         df_clean[col] = df_clean[col].map({'Y': 1, 'N': 0}).fillna(0).astype('int8')
 
@@ -99,7 +101,7 @@ from IPython.display import display
 import matplotlib.pyplot as plt
 
 # High-level dataset summary for documentation before modelling.
-load_dates = pd.to_datetime(df['LAADDATUM'], format='%d-%m-%Y', errors='coerce')
+load_dates = pd.to_datetime(df['load date'], format='%d/%m/%Y', errors='coerce')
 
 dataset_overview = pd.DataFrame({
     'Metric': [
